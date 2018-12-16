@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ExtFileCopy
+namespace ExtStorageTrans
 {
     class MainWindowData : INotifyPropertyChanged
     {
@@ -33,18 +33,18 @@ namespace ExtFileCopy
             set { this.SetProperty(ref this._Progress, value); }
         }
 
-        private string _CopySettingTitle;
-        public string CopySettingTitle
+        private string _TransSettingTitle;
+        public string TransSettingTitle
         {
-            get { return _CopySettingTitle; }
-            set { this.SetProperty(ref this._CopySettingTitle, value); }
+            get { return _TransSettingTitle; }
+            set { this.SetProperty(ref this._TransSettingTitle, value); }
         }
 
-        private string _TotalCopyCount;
-        public string TotalCopyCount
+        private string _TotalTransCount;
+        public string TotalTransCount
         {
-            get { return _TotalCopyCount; }
-            set { this.SetProperty(ref this._TotalCopyCount, value); }
+            get { return _TotalTransCount; }
+            set { this.SetProperty(ref this._TotalTransCount, value); }
         }
     }
     

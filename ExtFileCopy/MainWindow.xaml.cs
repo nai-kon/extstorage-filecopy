@@ -4,7 +4,7 @@ using System.Threading;
 using System.Windows;
 using System.Threading.Tasks;
 
-namespace ExtFileCopy
+namespace ExtStorageTrans
 {
     /// <summary>
     /// MainWindow.xaml の相互作用ロジック
@@ -14,7 +14,7 @@ namespace ExtFileCopy
     public partial class MainWindow : Window
     {
         private MainWindowData vdata;
-        private CopyFiles copyInst;
+        private TransFiles transInst;
 
         public MainWindow()
         {
@@ -29,42 +29,42 @@ namespace ExtFileCopy
 
             try {
                 xml.Load(App.settingxml);
-                var settings = xml.SelectNodes("copy/setting");
+                var settings = xml.SelectNodes("trans/setting");
                 foreach(XmlNode setting in settings) {
-                    copyInst = new CopyFiles(vdata);
-                    copyInst.title = vdata.CopySettingTitle = setting.Attributes["title"].InnerText;
-                    copyInst.srctype = setting.SelectSingleNode("mediatype").InnerText;
-                    copyInst.srcvolname = setting.SelectSingleNode("srcvolname").InnerText;
-                    copyInst.srcdir = setting.SelectSingleNode("srcdir").InnerText;
-                    copyInst.destdir = setting.SelectSingleNode("destdir").InnerText;
-                    copyInst.extension = setting.SelectSingleNode("extension").InnerText;
+                    transInst = new TransFiles(vdata);
+                    transInst.title = vdata.TransSettingTitle = setting.Attributes["title"].InnerText;
+                    transInst.srctype = setting.SelectSingleNode("mediatype").InnerText;
+                    transInst.srcvolname = setting.SelectSingleNode("srcvolname").InnerText;
+                    transInst.srcdir = setting.SelectSingleNode("srcdir").InnerText;
+                    transInst.destdir = setting.SelectSingleNode("destdir").InnerText;
+                    transInst.extension = setting.SelectSingleNode("extension").InnerText;
                     break;
                 }
             }
             catch (Exception e) {
-                copyInst = null;
+                transInst = null;
                 MessageBox.Show("設定エラー", App.appname);
             }
         }
 
-        private async Task AsncExecCopy(){
-            if (copyInst == null) return;
+        private async Task AsncExecTrans(){
+            if (transInst == null) return;
 
-            ExecCopy.IsEnabled = false;
+            ExecTrans.IsEnabled = false;
             int res = await Task.Run(() =>
             {
-                return copyInst.ExecCopy();
+                return transInst.ExecTrans();
             });
             if (res == 0) {
                 // コピー先をエクスプローラで開く
-                System.Diagnostics.Process.Start(copyInst.destdir);
+                System.Diagnostics.Process.Start(transInst.destdir);
             }
-            ExecCopy.IsEnabled = true;
+            ExecTrans.IsEnabled = true;
         }
 
-        private async void ExecCopy_Click(object sender, RoutedEventArgs e)
+        private async void ExecTrans_Click(object sender, RoutedEventArgs e)
         {
-            await AsncExecCopy();
+            await AsncExecTrans();
         }
     }
 }

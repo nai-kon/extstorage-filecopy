@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 
 
-namespace ExtFileCopy
+namespace ExtStorageTrans
 {
-    public class CopyFileObject
+    public class TransFileObject
     {
         public string fileName;
         public string objId;
         //public UInt64 size;
         //public FILETIME
-        public CopyFileObject(string fname, string objid) {
+        public TransFileObject(string fname, string objid) {
             this.fileName = fname;
             this.objId = objid;
         }
@@ -19,8 +19,8 @@ namespace ExtFileCopy
     interface ICopyStorage
     {
         bool FindSrcDir(string volume, string srcDirpath, out string retryMsg, MainWindowData mainWnd);
-        IEnumerable<CopyFileObject> GetAllFiles(string ext, MainWindowData mainWnd);
-        string[] ExecCopyFile(string destDirpath, IEnumerable<CopyFileObject> copyFiles, MainWindowData mainWnd);   
+        IEnumerable<TransFileObject> GetAllFiles(string ext, MainWindowData mainWnd);
+        string[] ExecCopyFile(string destDirpath, IEnumerable<TransFileObject> copyFiles, MainWindowData mainWnd);   
 
     }
 
@@ -30,11 +30,11 @@ namespace ExtFileCopy
 
             ICopyStorage inst = null;
             switch (mediatype) {
-                case CopyFromRemovableStorage.mediatype:
-                    inst = new CopyFromRemovableStorage();
+                case TransFromMTPDevice.mediatype:
+                    inst = new TransFromMTPDevice();
                     break;
-                case CopyFromPortableDevice.mediatype:
-                    inst = new CopyFromPortableDevice();
+                case TransFromMSCDevice.mediatype:
+                    inst = new TransFromMSCDevice();
                     break;
                 default:
                     inst = null;

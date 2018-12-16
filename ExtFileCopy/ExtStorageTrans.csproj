@@ -71,9 +71,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="CopyFiles.cs" />
-    <Compile Include="CopyFromPortableDevice.cs" />
-    <Compile Include="CopyFromRemovableStorage.cs" />
+    <Compile Include="TransFiles.cs" />
+    <Compile Include="TransFromMTPDevice.cs" />
+    <Compile Include="TransFromMSCDevice.cs" />
     <Compile Include="ICopyStorage.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

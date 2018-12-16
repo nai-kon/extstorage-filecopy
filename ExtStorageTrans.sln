@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtFileCopy", "ExtFileCopy\ExtFileCopy.csproj", "{0FE6A859-34E6-4930-93C7-F680FAA5307E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtStorageTrans", "ExtFileCopy\ExtStorageTrans.csproj", "{0FE6A859-34E6-4930-93C7-F680FAA5307E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

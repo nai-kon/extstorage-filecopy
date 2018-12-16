@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ExtFileCopy.Properties
+namespace ExtStorageTrans.Properties
 {
 
 

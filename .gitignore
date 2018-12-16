@@ -261,3 +261,6 @@ __pycache__/
 *.pyc
 /ExtFileCopy/CopySetting.xml
 /ExtFileCopy/CopySettingMTP.xml
+/ExtFileCopy/CopySetting_Nova.xml
+/ExtFileCopy/CopySetting_iPad.xml
+/ExtFileCopy/CopySetting_DSLR.xml

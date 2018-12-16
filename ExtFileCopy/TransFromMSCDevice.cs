@@ -3,11 +3,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ExtFileCopy { 
+namespace ExtStorageTrans { 
 
-    class CopyFromRemovableStorage : ICopyStorage
+    class TransFromMSCDevice : ICopyStorage
     {
-        public const string mediatype = "Removable";
+        public const string mediatype = "MSC";
         private string srcdir = null;
 
 
@@ -34,20 +34,20 @@ namespace ExtFileCopy {
             return ret;
         }
 
-        public IEnumerable<CopyFileObject> GetAllFiles(string ext, MainWindowData mainWnd) {
+        public IEnumerable<TransFileObject> GetAllFiles(string ext, MainWindowData mainWnd) {
 
             if (srcdir == null) return null;
 
-            var ret = new List<CopyFileObject>();
+            var ret = new List<TransFileObject>();
             foreach(var filename in Directory.GetFiles(srcdir, ext, SearchOption.AllDirectories)) {
-                ret.Add(new CopyFileObject(Path.GetFileName(filename), null));
+                ret.Add(new TransFileObject(Path.GetFileName(filename), null));
             }
 
             return ret;
         }
 
 
-        public string[] ExecCopyFile(string destDirpath, IEnumerable<CopyFileObject> copyFiles, MainWindowData mainWnd){
+        public string[] ExecCopyFile(string destDirpath, IEnumerable<TransFileObject> copyFiles, MainWindowData mainWnd){
 
             if (srcdir == null) return null;
 

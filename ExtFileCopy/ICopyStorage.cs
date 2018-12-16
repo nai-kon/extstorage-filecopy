@@ -4,11 +4,23 @@ using System.Collections.Generic;
 
 namespace ExtFileCopy
 {
+    public class CopyFileObject
+    {
+        public string fileName;
+        public string objId;
+        //public UInt64 size;
+        //public FILETIME
+        public CopyFileObject(string fname, string objid) {
+            this.fileName = fname;
+            this.objId = objid;
+        }
+    }
+
     interface ICopyStorage
     {
-        string GetTrueDirpath(string volume, string dirpath);
-        string[] GetFilenames(string dirpath, string ext);
-        string[] ExecCopyFile(string srcDirpath, string destDirath, IEnumerable<string> CopyFilenames, MainWindowData mainWnd);   
+        bool FindSrcDir(string volume, string srcDirpath, out string retryMsg, MainWindowData mainWnd);
+        IEnumerable<CopyFileObject> GetAllFiles(string ext, MainWindowData mainWnd);
+        string[] ExecCopyFile(string destDirpath, IEnumerable<CopyFileObject> copyFiles, MainWindowData mainWnd);   
 
     }
 
@@ -21,8 +33,8 @@ namespace ExtFileCopy
                 case CopyFromRemovableStorage.mediatype:
                     inst = new CopyFromRemovableStorage();
                     break;
-                case CopyFromMTPDevice.mediatype:
-                    //inst = new CopyFromMTPDevice();
+                case CopyFromPortableDevice.mediatype:
+                    inst = new CopyFromPortableDevice();
                     break;
                 default:
                     inst = null;

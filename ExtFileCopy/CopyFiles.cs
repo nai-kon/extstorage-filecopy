@@ -15,7 +15,8 @@ namespace ExtFileCopy
         public string destdir = null;
         public string extension = null;
         private MainWindowData vdata = null;
-        
+
+
 
         public CopyFiles(MainWindowData vdata) {
             this.vdata = vdata;
@@ -27,28 +28,33 @@ namespace ExtFileCopy
             ICopyStorage storage = ICopyStorageFactory.Create(srctype);
             if (storage == null) return -1;
 
-            // コピー元のフォルダパスを取得
-            string truesrcdir = null;
-            while ((truesrcdir = storage.GetTrueDirpath(srcvolname, srcdir)) == null) {
-                if (MessageBox.Show("メディアを挿入してOKを選択してください", App.appname, MessageBoxButton.OKCancel) == MessageBoxResult.Cancel) {
+            // コピー元のフォルダパスを抽出
+            string retryMsg;
+            while (!storage.FindSrcDir(srcvolname, srcdir, out retryMsg, vdata)) {
+                if (MessageBox.Show(retryMsg, App.appname, MessageBoxButton.OKCancel) == MessageBoxResult.Cancel) {
                     return -1;
                 }
             }
 
-            // コピー先に存在しないコピー元ファイルを抽出            
-            IEnumerable<string> copyfname = storage.GetFilenames(truesrcdir, extension).Where(fname => System.IO.File.Exists(destdir + fname) == false);
-            if (copyfname.Count() == 0) {
+            // コピー先に存在しないコピー元ファイルを抽出
+            var copyfile = storage.GetAllFiles(extension, vdata).Where(fname => System.IO.File.Exists(destdir + fname.fileName) == false);
+            if (copyfile == null || copyfile.Count() == 0) {
                 vdata.TotalCopyCount = "同期対象のファイルはありません";
                 return -1;
             }
 
 
             // コピー処理
-            vdata.TotalCopyCount = String.Format("コピー中　{0}個の項目", copyfname.Count());
-            string[] filedfile = storage.ExecCopyFile(truesrcdir, destdir, copyfname, vdata);
-            vdata.TotalCopyCount = "コピー完了";
-            vdata.DispInfo += String.Format("コピー完了 - 失敗{0}項目\n", filedfile.Count());
-            return 0;
+            int ret = -1;
+            vdata.TotalCopyCount =String.Format("コピー中　{0}個の項目", copyfile.Count());
+            vdata.DispInfo = vdata.TotalCopyCount + "\n";
+            string[] filedfile = storage.ExecCopyFile(destdir, copyfile, vdata);
+            if (filedfile != null) {
+                ret = 0;
+                vdata.TotalCopyCount = "コピー完了";
+                vdata.DispInfo += String.Format("コピー完了 - 失敗{0}項目\n", filedfile.Count());
+            }
+            return ret;
         }
 
     }

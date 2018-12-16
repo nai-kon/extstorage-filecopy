@@ -7,12 +7,14 @@ namespace ExtFileCopy {
 
     class CopyFromRemovableStorage : ICopyStorage
     {
-
         public const string mediatype = "Removable";
+        private string srcdir = null;
 
-        public string GetTrueDirpath(string volume, string dirpath){
 
-            string TrueDirpath = null;
+        public bool FindSrcDir(string volume, string srcDirpath, out string retryMsg, MainWindowData mainWnd) {
+
+            bool ret = false;
+            retryMsg = "メディアを挿入してOKを選択してください";
 
             // ボリューム名が一致するドライブのパスを取得
             DriveInfo[] drives = DriveInfo.GetDrives();
@@ -20,40 +22,48 @@ namespace ExtFileCopy {
 
                 if (drive.IsReady && drive.VolumeLabel == volume) {
                     
-                    string temp = drive.Name.TrimEnd('\\') + dirpath;
+                    string temp = drive.Name.TrimEnd('\\') + srcDirpath;
                     if (Directory.Exists(temp)) {
-                        TrueDirpath = temp;
+                        ret = true;
+                        srcdir = temp;
                         break;
                     }
                 }
             }
             
-            return TrueDirpath;
+            return ret;
         }
 
-        public string[] GetFilenames(string dirpath, string ext){
-            
-            return Array.ConvertAll(Directory.GetFiles(dirpath, ext, SearchOption.AllDirectories),
-                                    fname => Path.GetFileName(fname)); 
+        public IEnumerable<CopyFileObject> GetAllFiles(string ext, MainWindowData mainWnd) {
+
+            if (srcdir == null) return null;
+
+            var ret = new List<CopyFileObject>();
+            foreach(var filename in Directory.GetFiles(srcdir, ext, SearchOption.AllDirectories)) {
+                ret.Add(new CopyFileObject(Path.GetFileName(filename), null));
+            }
+
+            return ret;
         }
 
 
-        public string[] ExecCopyFile(string srcDirpath, string destDirath, IEnumerable<string> CopyFilenames, MainWindowData mainWnd){
+        public string[] ExecCopyFile(string destDirpath, IEnumerable<CopyFileObject> copyFiles, MainWindowData mainWnd){
+
+            if (srcdir == null) return null;
 
             var filedfile = new List<string>();
 
             int cnt = 0;
-            int total = CopyFilenames.Count();
-            mainWnd.DispInfo += String.Format("コピーファイル数:{0}\n", total);
-            foreach(string fname in CopyFilenames) {
+            int total = copyFiles.Count();
+            foreach(var file in copyFiles) {
                 try {
-                    File.Copy(srcDirpath + fname, destDirath + fname, false);
-                    mainWnd.DispInfo += String.Format("成功：{0}\n", fname);
+                    File.Copy(srcdir + file.fileName, destDirpath + file.fileName, false);
+                    mainWnd.DispInfo += String.Format("成功：{0}\n", file.fileName);
                     cnt++;
                 }
                 catch (Exception e) {
-                    filedfile.Add(fname);
-                    mainWnd.DispInfo += String.Format("失敗：{0} [{1}]\n", e.Message, fname);
+                    filedfile.Add(file.fileName);
+                    mainWnd.DispInfo += String.Format("失敗：{0} [{1}]\n", e.Message, file.fileName);
                 }
 
                 mainWnd.Progress = (100 * cnt) / total;

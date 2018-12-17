@@ -12,20 +12,6 @@ using System.Runtime.InteropServices;
 
 namespace ExtStorageTrans
 {
-    public class MTPDeviceObject
-    {
-        public enum ObjectKind { ALL, DIR, FILE };
-
-        public string Id { get; private set; }
-        public string Name { get; private set; }
-        public ObjectKind Kind { get; private set; }
-
-        public MTPDeviceObject(string id, string name, ObjectKind kind) {
-            this.Id = id;
-            this.Name = name;
-            this.Kind = kind;
-        }
-    }
 
     class TransFromMTPDevice : ICopyStorage
     {
@@ -40,13 +26,12 @@ namespace ExtStorageTrans
 
         public bool FindSrcDir(string volume, string dirpath, out string retryMsg, MainWindowData mainWnd) {
             
-            bool existsSrcDir = true;
             const string defretryMsg = "機器を接続してOKを選択してください";
-            retryMsg = defretryMsg;
-            deviceManager.RefreshDeviceList();            
+            retryMsg = defretryMsg;          
 
             // 接続中のデバイス数を取得
             uint count = 0;
+            deviceManager.RefreshDeviceList();
             deviceManager.GetDevices(null, ref count);
             if (count == 0) {
                 retryMsg = defretryMsg;
@@ -59,7 +44,7 @@ namespace ExtStorageTrans
             deviceManager.GetDevices(deviceIds, ref count);
 
             var clientInfo = (IPortableDeviceValues) new PortableDeviceValuesClass();
-
+            bool existsSrcDir = true;
             foreach (var deviceId in deviceIds) {
 
                 PortableDeviceClass device = new PortableDeviceClass();
@@ -93,15 +78,17 @@ namespace ExtStorageTrans
                     }
 
                     // コピー元フォルダのデバイスIDを取得
+                    existsSrcDir = true;
                     string curDirId = "DEVICE";
                     foreach (string searchdir in dirpath.TrimStart('\\').TrimEnd('\\').Split('\\')){
                         //Console.WriteLine(searchdir);
                         bool existCurDir = false;
-                        var dirObjs = GetObjects(curDirId, content, MTPDeviceObject.ObjectKind.DIR);
+                        var dirObjs = GetObjects(curDirId, content, TransFileObject.ObjectKind.DIR);
+
                         foreach (var dirobj in dirObjs) {
-                            if (dirobj.Name == searchdir) {
+                            if (dirobj.fileName == searchdir) {
                                 existCurDir = true;
-                                curDirId = dirobj.Id;
+                                curDirId = dirobj.objId;
                                 break;
                             }
                         }
@@ -118,7 +105,7 @@ namespace ExtStorageTrans
                     }               
                 }
                 catch (Exception e) {
-                    Console.WriteLine(e.Message);
+                    mainWnd.DispInfo = string.Format("コピー元の検出失敗\n{0}", e.Message);
                     existsSrcDir = false;
                 }
                 finally {
@@ -137,7 +124,6 @@ namespace ExtStorageTrans
             var files = new List<TransFileObject>();
             PortableDeviceClass device = new PortableDeviceClass();
             try {
-
                 IPortableDeviceContent content;
                 IPortableDeviceProperties properties;
                 var clientInfo = (IPortableDeviceValues)new PortableDeviceValuesClass();
@@ -145,12 +131,13 @@ namespace ExtStorageTrans
                 device.Content(out content);
                 content.Properties(out properties);
                 
-                // 拡張子が一致するファイルを抽出
+                // コピー対象の拡張子と一致するファイルを抽出
                 var patExt = new Regex("." + ext, RegexOptions.Compiled);
-                var srcfiles = GetObjects(srcDirObjId, content, MTPDeviceObject.ObjectKind.FILE);                               
+                var srcfiles = GetObjects(srcDirObjId, content, TransFileObject.ObjectKind.FILE);                               
                 foreach (var srcfile in srcfiles) {
-                    if (patExt.IsMatch(srcfile.Name)) {
-                        files.Add(new TransFileObject(srcfile.Name, srcfile.Id));
+
+                    if (patExt.IsMatch(srcfile.fileName)) {
+                        files.Add(new TransFileObject(srcfile.fileName, srcfile.objId, srcfile.updateTime, srcfile.kind));
                     }
                 }
             }
@@ -160,7 +147,6 @@ namespace ExtStorageTrans
             finally {
                 device.Close();
             }
-
             return files;
         }
 
@@ -181,7 +167,7 @@ namespace ExtStorageTrans
 
             foreach (var file in copyFiles) {
                 try {
-                    DownloadFile(file.objId, destDirpath + file.fileName, content);
+                    DownloadFile(file, destDirpath + file.fileName, content);
                     mainWnd.DispInfo += String.Format("成功：{0}\n", file.fileName);
                     cnt++;
                 }
@@ -198,9 +184,9 @@ namespace ExtStorageTrans
         }
 
 
-        private List<MTPDeviceObject> GetObjects(string parentDirId, IPortableDeviceContent content, MTPDeviceObject.ObjectKind kindFilter = MTPDeviceObject.ObjectKind.ALL) {
+        private List<TransFileObject> GetObjects(string parentDirId, IPortableDeviceContent content, TransFileObject.ObjectKind kindFilter = TransFileObject.ObjectKind.ALL) {
 
-            var retObjs = new List<MTPDeviceObject>();
+            var retObjs = new List<TransFileObject>();
 
             IPortableDeviceProperties properties;
             content.Properties(out properties);
@@ -215,8 +201,8 @@ namespace ExtStorageTrans
                 objectIDs.Next(1, out objectID, ref fetched);
                 if (fetched <= 0) break;
 
-                MTPDeviceObject currentObject = WrapObject(properties, objectID);
-                if (kindFilter == MTPDeviceObject.ObjectKind.ALL || currentObject.Kind == kindFilter) {
+                TransFileObject currentObject = WrapObject(properties, objectID);
+                if (kindFilter == TransFileObject.ObjectKind.ALL || currentObject.kind == kindFilter) {
                     retObjs.Add(currentObject);
                 }
             }
@@ -225,26 +211,24 @@ namespace ExtStorageTrans
         }
 
 
-        private MTPDeviceObject WrapObject(IPortableDeviceProperties properties, string objectId) {
-            string orig_name;
+        private TransFileObject WrapObject(IPortableDeviceProperties properties, string objectId) {
+            
             IPortableDeviceKeyCollection keys;
             properties.GetSupportedProperties(objectId, out keys);
 
             IPortableDeviceValues values;
-
             properties.GetValues(objectId, keys, out values);
 
             // Get the name of the object
             string name;
             var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                                      0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
+            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
             property.pid = 4;
 
             try {
                 values.GetStringValue(property, out name);
             }
-            catch (System.Runtime.InteropServices.COMException exc) {
+            catch (COMException e) {
                 name = "(non name)";
             }
 
@@ -256,8 +240,22 @@ namespace ExtStorageTrans
             try {
                 values.GetStringValue(property, out OriginalName);
             }
-            catch (Exception e) {
+            catch (COMException e) {
                 OriginalName = "";
+            }
+
+            // Get last write time
+            DateTime updatetime = new DateTime();
+            property = new _tagpropertykey();
+            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
+            property.pid = 19;
+            try {
+                float value;
+                values.GetFloatValue(property, out value);
+                updatetime = DateTime.FromOADate(value);
+            }
+            catch (COMException e) {
+                //updatetime
             }
 
             // Get the type of the object
@@ -268,31 +266,31 @@ namespace ExtStorageTrans
             try {
                 values.GetGuidValue(property, out contentType);
             }
-            catch (System.Runtime.InteropServices.COMException exc) {
-                return new MTPDeviceObject(null, name, MTPDeviceObject.ObjectKind.DIR);
+            catch (COMException e) {
+                return new TransFileObject(name, null, updatetime, TransFileObject.ObjectKind.DIR);
             }
-
+            
             Guid folderType = new Guid(0x27E2E392, 0xA111, 0x48E0, 0xAB, 0x0C, 0xE1, 0x77, 0x05, 0xA0, 0x5F, 0x85);
             Guid functionalType = new Guid(0x99ED0160, 0x17FF, 0x4C44, 0x9D, 0x98, 0x1D, 0x7A, 0x6F, 0x94, 0x19, 0x21);
 
             if (contentType == folderType || contentType == functionalType) {
-                return new MTPDeviceObject(objectId, name, MTPDeviceObject.ObjectKind.DIR);
+                return new TransFileObject(name, objectId, updatetime, TransFileObject.ObjectKind.DIR);
             }
 
             if (OriginalName.CompareTo("") != 0) {
                 name = OriginalName;
             }
 
-            return new MTPDeviceObject(objectId, name, MTPDeviceObject.ObjectKind.FILE);
+            return new TransFileObject(name, objectId, updatetime, TransFileObject.ObjectKind.FILE);
         }
         
 
-        private void DownloadFile(string fileID, string destPath, IPortableDeviceContent content) {
+        private void DownloadFile(TransFileObject file, string destPath, IPortableDeviceContent content) {
 
             IPortableDeviceProperties properties;
             content.Properties(out properties);
 
-            var downloadFileObj = WrapObject(properties, fileID);
+            var downloadFileObj = WrapObject(properties, file.objId);
 
             IPortableDeviceResources resources;
             content.Transfer(out resources);
@@ -301,11 +299,10 @@ namespace ExtStorageTrans
             uint optimalTransferSize = 0;
 
             var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xE81E79BE, 0x34F0, 0x41BF, 0xB5, 0x3F,
-                                        0xF1, 0xA0, 0x6A, 0xE8, 0x78, 0x42);
+            property.fmtid = new Guid(0xE81E79BE, 0x34F0, 0x41BF, 0xB5, 0x3F, 0xF1, 0xA0, 0x6A, 0xE8, 0x78, 0x42);
             property.pid = 0;
 
-            resources.GetStream(fileID, ref property, 0, ref optimalTransferSize, out wpdStream);
+            resources.GetStream(file.objId, ref property, 0, ref optimalTransferSize, out wpdStream);
             System.Runtime.InteropServices.ComTypes.IStream sourceStream = (System.Runtime.InteropServices.ComTypes.IStream)wpdStream;
 
             FileStream targetStream = new FileStream(destPath, FileMode.Create, FileAccess.Write);
@@ -325,6 +322,9 @@ namespace ExtStorageTrans
 
             Marshal.ReleaseComObject(sourceStream);
             Marshal.ReleaseComObject(wpdStream);
+
+            // ファイルの更新日時を更新
+            File.SetLastWriteTime(destPath, file.updateTime);
         }
 
     }

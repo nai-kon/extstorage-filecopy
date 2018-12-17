@@ -6,16 +6,20 @@ namespace ExtStorageTrans
 {
     public class TransFileObject
     {
+        public enum ObjectKind { ALL, DIR, FILE };
         public string fileName;
         public string objId;
+        public DateTime updateTime;
+        public ObjectKind kind;
         //public UInt64 size;
-        //public FILETIME
-        public TransFileObject(string fname, string objid) {
+        public TransFileObject(string fname, string objid, DateTime updatetime, ObjectKind kind) {
             this.fileName = fname;
             this.objId = objid;
+            this.updateTime = updatetime;
+            this.kind = kind;
         }
     }
-
+    
     interface ICopyStorage
     {
         bool FindSrcDir(string volume, string srcDirpath, out string retryMsg, MainWindowData mainWnd);

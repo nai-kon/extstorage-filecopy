@@ -34,18 +34,17 @@ namespace ExtStorageTrans
             }
 
             // コピー先に存在しない同期元ファイルを抽出
-            var transFilse = storage.GetAllFiles(extension, vdata).Where(fname => System.IO.File.Exists(destdir + fname.fileName) == false);
-            if (transFilse == null || transFilse.Count() == 0) {
+            var transFiles = storage.GetAllFiles(extension, vdata).Where(file => System.IO.File.Exists(destdir + file.fileName) == false);
+            if (transFiles == null || transFiles.Count() == 0) {
                 vdata.TotalTransCount = "同期対象のファイルはありません";
                 return -1;
             }
 
-
             // コピー処理
             int ret = -1;
-            vdata.TotalTransCount =String.Format("コピー中　{0}個の項目", transFilse.Count());
+            vdata.TotalTransCount =String.Format("コピー中　{0}個の項目", transFiles.Count());
             vdata.DispInfo = vdata.TotalTransCount + "\n";
-            string[] filedfile = storage.ExecCopyFile(destdir, transFilse, vdata);
+            string[] filedfile = storage.ExecCopyFile(destdir, transFiles, vdata);
             if (filedfile != null) {
                 ret = 0;
                 vdata.TotalTransCount = "コピー完了";
@@ -53,6 +52,5 @@ namespace ExtStorageTrans
             }
             return ret;
         }
-
     }
 }

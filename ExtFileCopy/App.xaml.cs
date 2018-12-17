@@ -15,7 +15,7 @@ namespace ExtStorageTrans
 
     public partial class App : Application
     {
-        public static string appname = "外部ストレージファイルコピー";
+        public static string appname = "外部ストレージファイル転送";
         public static string settingxml = "";
 
         private void Application_Startup(object sender, StartupEventArgs e){

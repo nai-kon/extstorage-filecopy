@@ -40,7 +40,8 @@ namespace ExtStorageTrans {
 
             var ret = new List<TransFileObject>();
             foreach(var filename in Directory.GetFiles(srcdir, ext, SearchOption.AllDirectories)) {
-                ret.Add(new TransFileObject(Path.GetFileName(filename), null));
+                // MSCモードでは更新日時は使わないので、ひとまず現在時刻にする
+                ret.Add(new TransFileObject(Path.GetFileName(filename), null, new DateTime(), TransFileObject.ObjectKind.FILE));
             }
 
             return ret;

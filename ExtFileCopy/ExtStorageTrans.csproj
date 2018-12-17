@@ -74,7 +74,7 @@
     <Compile Include="TransFiles.cs" />
     <Compile Include="TransFromMTPDevice.cs" />
     <Compile Include="TransFromMSCDevice.cs" />
-    <Compile Include="ICopyStorage.cs" />
+    <Compile Include="ITransFromDevice.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -24,6 +25,12 @@ namespace ExtStorageTrans
 
             ICopyStorage storage = ICopyStorageFactory.Create(srctype);
             if (storage == null) return -1;
+
+            // 同期先のフォルダ存在チェック
+            if(!Directory.Exists(destdir)) {
+                MessageBox.Show(string.Format("コピー先のフォルダがありません\n{0}", destdir), App.appname, MessageBoxButton.OK);
+                return -1;
+            }
 
             // 同期元のフォルダパスを抽出
             string retryMsg;

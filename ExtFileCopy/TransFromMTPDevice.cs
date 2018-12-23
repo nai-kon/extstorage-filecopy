@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Drawing;
 using PortableDeviceApiLib;
 using PortableDeviceTypesLib;
 using _tagpropertykey = PortableDeviceApiLib._tagpropertykey;
@@ -245,7 +246,7 @@ namespace ExtStorageTrans
             }
 
             // Get last write time
-            DateTime updatetime = DateTime.Now;
+            DateTime updatetime = new DateTime();
             property = new _tagpropertykey();
             property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
             property.pid = 19;
@@ -255,7 +256,7 @@ namespace ExtStorageTrans
                 updatetime = DateTime.FromOADate(value);
             }
             catch (COMException e) {
-                //updatetime
+                //updatetime = DateTime.Now;
             }
 
             // Get the type of the object
@@ -323,9 +324,35 @@ namespace ExtStorageTrans
             Marshal.ReleaseComObject(sourceStream);
             Marshal.ReleaseComObject(wpdStream);
 
+
             // ファイルの更新日時を更新
-            File.SetLastWriteTime(destPath, file.updateTime);
+            DateTime setDate = file.updateTime;
+            if (setDate.CompareTo(DateTime.MinValue) == 0) {
+                setDate = GetImgTakenDate(destPath);  // Exifから撮影日時情報を取得
+            }
+            File.SetLastWriteTime(destPath, setDate);
         }
 
+        private DateTime GetImgTakenDate(string imgPath) {
+
+            if (!imgPath.EndsWith(".jpg")) {
+                return DateTime.Now;
+            }
+
+            // Exif情報から撮影日時を取得
+            DateTime takenDate = DateTime.Now; // デフォルトは現在日時
+            Bitmap bmp = new Bitmap(imgPath);
+            foreach (System.Drawing.Imaging.PropertyItem item in bmp.PropertyItems) {
+                if (item.Id == 0x9003 && item.Type == 2) {
+                    string val = System.Text.Encoding.ASCII.GetString(item.Value);
+                    val = val.Trim(new char[] { '\0' });
+                    takenDate = DateTime.ParseExact(val, "yyyy:MM:dd HH:mm:ss", null);
+                    break;
+                }
+            }
+            bmp.Dispose();                
+
+            return takenDate;
+        }
     }
 }

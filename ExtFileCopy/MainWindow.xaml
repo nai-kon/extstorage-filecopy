@@ -8,7 +8,7 @@
         ResizeMode="NoResize"
         Title="外部ストレージファイル転送" Height="236.519" Width="320" SizeToContent="Height">
     <Grid Margin="0,0,0,5">
-        <TextBlock x:Name="TransSettingTitle" Margin="16,20,16,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="32" Width="282" FontSize="14" FontWeight="Bold" Text="{Binding TransSettingTitle, Mode=OneWay}"/>
+        <TextBlock x:Name="TransSettingTitle" Margin="16,20,16,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="32" Width="282" FontWeight="Bold" Text="{Binding TransSettingTitle, Mode=OneWay}" TextAlignment="Center" FontSize="16"/>
         <Button x:Name="ExecTrans" Content="転送開始" Margin="0,75,0,0" VerticalAlignment="Top" Width="282" FontWeight="Bold" Height="34" FontSize="18" Click="ExecTrans_Click"/>
         <Grid Width="282" Height="34" VerticalAlignment="Top" Margin="0, 120,0,0">
             <ProgressBar Value="{Binding Progress}"  Foreground="#FF01D36A" />

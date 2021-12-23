@@ -251,9 +251,10 @@ namespace ExtStorageTrans
             property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
             property.pid = 19;
             try {
-                float value;
-                values.GetFloatValue(property, out value);
-                updatetime = DateTime.FromOADate(value);
+                string value;
+                values.GetStringValue(property, out value);
+                string format = "yyyy/MM/dd:HH:mm:ss.fff";
+                updatetime = DateTime.ParseExact(value, format, null);
             }
             catch (COMException e) {
                 //updatetime = DateTime.Now;
